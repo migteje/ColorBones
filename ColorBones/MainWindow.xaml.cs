@@ -49,16 +49,6 @@ namespace ColorBones
         private const double DrawTextFontSize = 30;
 
         /// <summary>
-        /// Text layout offset in X axis
-        /// </summary>
-        //private const float TextLayoutOffsetX = -0.1f;
-
-        /// <summary>
-        /// Text layout offset in Y axis
-        /// </summary>
-        //private const float TextLayoutOffsetY = -0.15f;
-
-        /// <summary>
         /// Number of bodies tracked
         /// </summary>
         private int bodyCount;
@@ -68,18 +58,7 @@ namespace ColorBones
         /// </summary>
         //private BodyFrameSource[] frameSources = null;
 
-        /// <summary>
-        /// Formatted text to indicate that there are no bodies/faces tracked in the FOV
-        /// </summary>
-        /*private FormattedText textNotTracked = new FormattedText(
-                        "No se detecta ningún cuerpo ...",
-                        CultureInfo.GetCultureInfo("es"),
-                        FlowDirection.LeftToRight,
-                        new Typeface("Georgia"),
-                        DrawTextFontSize,
-                        Brushes.White);*/
-
-        /// <summary>
+          /// <summary>
         /// Reader for color frames
         /// </summary>
         private MultiSourceFrameReader reader;
@@ -303,10 +282,10 @@ namespace ColorBones
                                         DrawJoint(canvas, point);
                                     }
                                 }
-                                //this.DrawRotationResults(canvas, body);
-                                //Console.WriteLine("Width: " + canvas.ActualWidth + " " + "Height: " + canvas.ActualHeight);
+                                this.DrawRotationResults(canvas, joints[JointType.WristRight], jointPoints[JointType.WristRight].X, jointPoints[JointType.WristRight].Y, body);
                                 this.DrawBody(joints, jointPoints, canvas);
-                                this.WriteAngle(AngleBetweenJoints(joints[JointType.WristRight], joints[JointType.ElbowRight], joints[JointType.ShoulderRight]));
+                                this.WriteAngle(AngleBetweenJoints(joints[JointType.WristRight], joints[JointType.ElbowRight], joints[JointType.ShoulderRight]), jointPoints[JointType.ElbowRight].X, jointPoints[JointType.ElbowRight].Y, canvas);
+
                             }
                         }
                     }
@@ -466,36 +445,15 @@ namespace ColorBones
             return Math.Sqrt(Math.Pow(x, 2) + Math.Pow(y, 2) + Math.Pow(z, 2));
         }
 
-        private void WriteAngle(double p)
+        private void WriteAngle(double p, double x, double y, Canvas c)
         {
-            this.messageTextBlock.Text = string.Format(CultureInfo.CurrentCulture, Properties.Resources.AngleMeasureMessage, p.ToString());
-        }
-          /// <summary>
-        /// Converts rotation quaternion to Euler angles 
-        /// And then maps them to a specified range of values to control the refresh rate
-        /// </summary>
-        /// <param name="rotQuaternion">face rotation quaternion</param>
-        /// <param name="pitch">rotation about the X-axis</param>
-        /// <param name="yaw">rotation about the Y-axis</param>
-        /// <param name="roll">rotation about the Z-axis</param>
-        private static void ExtractRotationInDegrees(Vector4 rotQuaternion, out int pitch, out int yaw, out int roll)
-        {
-            double x = rotQuaternion.X;
-            double y = rotQuaternion.Y;
-            double z = rotQuaternion.Z;
-            double w = rotQuaternion.W;
-
-            // convierte la rotacion a angulos de Euler, en grados
-            double yawD, pitchD, rollD;
-            pitchD = Math.Atan2(2 * ((y * z) + (w * x)), (w * w) - (x * x) - (y * y) + (z * z)) / Math.PI * 180.0;
-            yawD = Math.Asin(2 * ((w * y) - (x * z))) / Math.PI * 180.0;
-            rollD = Math.Atan2(2 * ((x * y) + (w * z)), (w * w) + (x * x) - (y * y) - (z * z)) / Math.PI * 180.0;
-
-            // limita los valores a un múltiplo de un incremento específico que controle el ratio de actualizaciones
-            double increment = 5.0;
-            pitch = (int)(Math.Floor((pitchD + ((increment / 2.0) * (pitchD > 0 ? 1.0 : -1.0))) / increment) * increment);
-            yaw = (int)(Math.Floor((yawD + ((increment / 2.0) * (yawD > 0 ? 1.0 : -1.0))) / increment) * increment);
-            roll = (int)(Math.Floor((rollD + ((increment / 2.0) * (rollD > 0 ? 1.0 : -1.0))) / increment) * increment);
+            TextBlock textBlock = new TextBlock();
+            textBlock.Text = string.Format(CultureInfo.CurrentCulture, Properties.Resources.AngleMeasureMessage, p.ToString());
+            textBlock.FontSize = 20;
+            textBlock.Foreground = new SolidColorBrush(Colors.LightBlue);
+            Canvas.SetLeft(textBlock, x);
+            Canvas.SetTop(textBlock, y);
+            c.Children.Add(textBlock);
         }
 
         /// <summary>
@@ -504,44 +462,59 @@ namespace ColorBones
         /// <param name="faceIndex">the index of the face frame corresponding to a specific body in the FOV</param>
         /// <param name="faceResult">container of all face frame results</param>
         /// <param name="drawingContext">drawing context to render to</param>
-       private void DrawRotationResults(Canvas can, Body bod)
+       private void DrawRotationResults(Canvas can, Joint joint, double x, double y, Body bod)
         {
             string jointText = string.Empty;
            Vector4 quaternion = new Vector4();
             IReadOnlyDictionary<JointType, JointOrientation> orientations = bod.JointOrientations;
-            foreach (Joint joint in bod.Joints.Values){
                quaternion.X = bod.JointOrientations[joint.JointType].Orientation.X;
                quaternion.Y = bod.JointOrientations[joint.JointType].Orientation.Y;
-                quaternion.Z = bod.JointOrientations[joint.JointType].Orientation.Z;
-                quaternion.W = bod.JointOrientations[joint.JointType].Orientation.W;
-            }
+               quaternion.Z = bod.JointOrientations[joint.JointType].Orientation.Z;
+               quaternion.W = bod.JointOrientations[joint.JointType].Orientation.W;
             
                 int pitch, yaw, roll;
 
                 ExtractRotationInDegrees(quaternion, out pitch, out yaw, out roll);
-                jointText += "JointYaw : " + yaw + "\n" +
+
+                TextBlock textBlock = new TextBlock();
+                textBlock.Text += "JointYaw : " + yaw + "\n" +
                             "JointPitch : " + pitch + "\n" +
                             "JointRoll : " + roll + "\n";
-            
-
-            // render the face property and face rotation information
-            /*Point faceTextLayout;
-            if (this.GetTextPositionInColorSpace(faceIndex, out TextLayout))
-            {
-                drawingContext.DrawText(
-                        new FormattedText(
-                            jointText,
-                            CultureInfo.GetCultureInfo("es"),
-                            FlowDirection.LeftToRight,
-                            new Typeface("Georgia"),
-                            DrawTextFontSize,
-                            drawingBrush),
-                        faceTextLayout);
-            }
-         }*/
-
- 
+                textBlock.FontSize = 20;
+                textBlock.Foreground = new SolidColorBrush(Colors.LightBlue);
+                Canvas.SetLeft(textBlock, x);
+                Canvas.SetTop(textBlock, y);
+                can.Children.Add(textBlock);
         }
+
+       /// <summary>
+       /// Converts rotation quaternion to Euler angles 
+       /// And then maps them to a specified range of values to control the refresh rate
+       /// </summary>
+       /// <param name="rotQuaternion">face rotation quaternion</param>
+       /// <param name="pitch">rotation about the X-axis</param>
+       /// <param name="yaw">rotation about the Y-axis</param>
+       /// <param name="roll">rotation about the Z-axis</param>
+       private static void ExtractRotationInDegrees(Vector4 rotQuaternion, out int pitch, out int yaw, out int roll)
+       {
+           double x = rotQuaternion.X;
+           double y = rotQuaternion.Y;
+           double z = rotQuaternion.Z;
+           double w = rotQuaternion.W;
+
+           // convierte la rotacion a angulos de Euler, en grados
+           double yawD, pitchD, rollD;
+           pitchD = Math.Atan2(2 * ((y * z) + (w * x)), (w * w) - (x * x) - (y * y) + (z * z)) / Math.PI * 180.0;
+           yawD = Math.Asin(2 * ((w * y) - (x * z))) / Math.PI * 180.0;
+           rollD = Math.Atan2(2 * ((x * y) + (w * z)), (w * w) + (x * x) - (y * y) - (z * z)) / Math.PI * 180.0;
+
+           // limita los valores a un múltiplo de un incremento específico que controle el ratio de actualizaciones
+           double increment = 5.0;
+           pitch = (int)(Math.Floor((pitchD + ((increment / 2.0) * (pitchD > 0 ? 1.0 : -1.0))) / increment) * increment);
+           yaw = (int)(Math.Floor((yawD + ((increment / 2.0) * (yawD > 0 ? 1.0 : -1.0))) / increment) * increment);
+           roll = (int)(Math.Floor((rollD + ((increment / 2.0) * (rollD > 0 ? 1.0 : -1.0))) / increment) * increment);
+       }
+
     }
 
 }
