@@ -282,9 +282,9 @@ namespace ColorBones
                                         DrawJoint(canvas, point);
                                     }
                                 }
-                                this.DrawRotationResults(canvas, joints[JointType.WristRight], jointPoints[JointType.WristRight].X, jointPoints[JointType.WristRight].Y, body);
+                                //this.DrawRotationResults(canvas, joints[JointType.WristRight], jointPoints[JointType.WristRight].X, jointPoints[JointType.WristRight].Y, body);
                                 this.DrawBody(joints, jointPoints, canvas);
-                                this.WriteAngle(AngleBetweenJoints(joints[JointType.WristRight], joints[JointType.ElbowRight], joints[JointType.ShoulderRight]), jointPoints[JointType.ElbowRight].X, jointPoints[JointType.ElbowRight].Y, canvas);
+                                //this.WriteAngle(AngleBetweenJoints(joints[JointType.WristRight], joints[JointType.ElbowRight], joints[JointType.ShoulderRight]), jointPoints[JointType.ElbowRight].X, jointPoints[JointType.ElbowRight].Y, canvas);
 
                             }
                         }
@@ -481,7 +481,7 @@ namespace ColorBones
                             "JointPitch : " + pitch + "\n" +
                             "JointRoll : " + roll + "\n";
                 textBlock.FontSize = 20;
-                textBlock.Foreground = new SolidColorBrush(Colors.LightBlue);
+                textBlock.Foreground = new SolidColorBrush(Colors.Red);
                 Canvas.SetLeft(textBlock, x);
                 Canvas.SetTop(textBlock, y);
                 can.Children.Add(textBlock);
@@ -509,7 +509,7 @@ namespace ColorBones
            rollD = Math.Atan2(2 * ((x * y) + (w * z)), (w * w) + (x * x) - (y * y) - (z * z)) / Math.PI * 180.0;
 
            // limita los valores a un múltiplo de un incremento específico que controle el ratio de actualizaciones
-           double increment = 5.0;
+           double increment = 1.0;
            pitch = (int)(Math.Floor((pitchD + ((increment / 2.0) * (pitchD > 0 ? 1.0 : -1.0))) / increment) * increment);
            yaw = (int)(Math.Floor((yawD + ((increment / 2.0) * (yawD > 0 ? 1.0 : -1.0))) / increment) * increment);
            roll = (int)(Math.Floor((rollD + ((increment / 2.0) * (rollD > 0 ? 1.0 : -1.0))) / increment) * increment);
